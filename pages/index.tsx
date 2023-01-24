@@ -1,26 +1,31 @@
 import { HomePageLayout } from "@/components/layout";
-import { Card, FormField, Loader } from "@/components/ui";
-import { ChangeEvent, FC, useEffect, useState } from "react";
-
-type Props = {
-  data: any;
-  title: string;
-};
-
-const RenderCards: FC<Props> = ({ data, title }) => {
-  if (data?.length > 0) {
-    return data.map((post: any) => <Card key={post._id} {...post} />);
-  }
-
-  return (
-    <h2 className="mt-5 font-bold text-[#6449ff] text-xl uppercase">{title}</h2>
-  );
-};
+import { FormField, Loader, RenderCards } from "@/components/ui";
+import useDebounce from "@/hooks/useDebounce";
+import { useFetchRepositories } from "@/hooks/usePost";
+import { IPost } from "@/interfaces/Post.interface";
+import { ChangeEvent, useMemo, useState } from "react";
 
 export default function Home() {
-  const [loading, setLoading] = useState(false);
-  const [allPost, setAllPost] = useState(null);
-  const [searchText, setsearchText] = useState("abc");
+  const { data, isLoading } = useFetchRepositories();
+
+  const [searchText, setsearchText] = useState("");
+  const [searchedResults, setSearchedResults] = useState<IPost[]>([]);
+  const filtered = useDebounce(searchText, 1000);
+
+  const filteredPost = useMemo(() => {
+    if (filtered) {
+      const searchResult = data!.data.filter(
+        (item) =>
+          item.name.toLowerCase().includes(filtered.toLowerCase()) ||
+          item.prompt.toLowerCase().includes(filtered.toLowerCase())
+      );
+      setSearchedResults(searchResult);
+    }
+  }, [filtered, data]);
+
+  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setsearchText(e.target.value);
+  };
 
   return (
     <HomePageLayout title="Home | Page" pageDescription="Home page">
@@ -36,18 +41,16 @@ export default function Home() {
         </div>
         <div className="mt-16">
           <FormField
-            label={""}
-            type={""}
-            name={""}
-            placeholder={""}
-            value={""}
-            onChange={function (e: ChangeEvent<HTMLInputElement>): void {
-              throw new Error("Function not implemented.");
-            }}
+            label={"Search for a post"}
+            type={"text"}
+            name={"text"}
+            placeholder={"Search for a post"}
+            value={searchText}
+            onChange={handleSearch}
           />
         </div>
         <div className="mt-10">
-          {loading ? (
+          {isLoading ? (
             <div className="flex justify-center items-center">
               <Loader />
             </div>
@@ -61,9 +64,12 @@ export default function Home() {
               )}
               <div className="grid lg:grid-cols-4 sm:grid-cols-3 xs:grid-cols-2 grid-cols-1 gap-3">
                 {searchText ? (
-                  <RenderCards data={[]} title="No result found" />
+                  <RenderCards
+                    data={searchedResults}
+                    title="No search result found"
+                  />
                 ) : (
-                  <RenderCards data={[]} title="No post found" />
+                  <RenderCards data={data!.data} title="No post found" />
                 )}
               </div>
             </>

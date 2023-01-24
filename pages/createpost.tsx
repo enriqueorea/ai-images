@@ -2,10 +2,14 @@ import { HomePageLayout } from "@/components/layout";
 import React, { useState } from "react";
 import { FormField, Loader } from "@/components/ui";
 import { getRandomPrompt } from "@/utils";
+import imagesApi from "@/apis/imagesApi";
+import { useRouter } from "next/router";
 
 type Props = {};
 
 const CreatePostPage = (props: Props) => {
+  const router = useRouter();
+
   const [form, setForm] = useState({
     name: "",
     prompt: "",
@@ -15,9 +19,46 @@ const CreatePostPage = (props: Props) => {
   const [loading, setLoading] = useState(false);
   const [generatingImg, setGeneratingImg] = useState(false);
 
-  const generateImage = async () => {};
+  const generateImage = async () => {
+    if (form.prompt) {
+      try {
+        setGeneratingImg(true);
+        const { data } = await imagesApi.post("/dalle", {
+          prompt: form.prompt,
+        });
+        console.log(data);
+        setForm((prev) => ({
+          ...prev,
+          photo: `data:image/jpeg;base64,${data.photo}`,
+        }));
+        setGeneratingImg(false);
+      } catch (error) {
+      } finally {
+        setGeneratingImg(false);
+      }
+    } else {
+      alert("Please enter a prompt");
+    }
+  };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {};
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (form.name && form.photo) {
+      setLoading(true);
+      try {
+        const { data } = await imagesApi.post("/post", form);
+        //return to index using nextjs router
+
+        router.push("/");
+      } catch (error) {
+        alert("Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      alert("Please enter your name and generate an image");
+    }
+  };
 
   const handleSurpriseMe = () => {
     const randomPrompt = getRandomPrompt(form.prompt);
