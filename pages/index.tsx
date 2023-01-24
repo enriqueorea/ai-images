@@ -28,7 +28,10 @@ export default function Home() {
   };
 
   return (
-    <HomePageLayout title="Home | Page" pageDescription="Home page">
+    <HomePageLayout
+      title="Home | All AI images"
+      pageDescription="Enjoy the full experience of AI generator image"
+    >
       <section className="max-w-7xl mx-auto">
         <div>
           <h1 className="font-extrabold text-[#222328] text-[32px]">
